@@ -143,7 +143,8 @@ async fn main() -> std::io::Result<()> {
         {
             let cors = actix_cors::Cors::default()
                 .allowed_origin_fn(|origin, _| origin.as_bytes().ends_with(b".fuiz.pages.dev"))
-                .allowed_origin("https://fuiz.us")
+                .allowed_origin("fuiz.dev.eclair.ec-lyon.fr")
+                .block_on_origin_mismatch(false)
                 .allowed_methods(vec!["GET", "POST"])
                 .allowed_headers(vec![
                     actix_web::http::header::AUTHORIZATION,
@@ -155,18 +156,21 @@ async fn main() -> std::io::Result<()> {
         }
         #[cfg(not(feature = "https"))]
         {
-            let cors = actix_cors::Cors::permissive();
+            let cors = actix_cors::Cors::default()
+                .allowed_origin_fn(|origin, _| origin.as_bytes().ends_with(b".fuiz.pages.dev"))
+                .allowed_origin("fuiz.dev.eclair.ec-lyon.fr")
+                .block_on_origin_mismatch(false)
+                .allowed_methods(vec!["GET", "POST"])
+                .allowed_headers(vec![
+                    actix_web::http::header::AUTHORIZATION,
+                    actix_web::http::header::ACCEPT,
+                ])
+                .supports_credentials()
+                .allowed_header(actix_web::http::header::CONTENT_TYPE);
             app.wrap(cors)
         }
     })
-    .bind((
-        if cfg!(feature = "https") {
-            "127.0.0.1"
-        } else {
-            "0.0.0.0"
-        },
-        5040,
-    ))?
+    .bind(("0.0.0.0", 5040))?
     .run()
     .await
 }
